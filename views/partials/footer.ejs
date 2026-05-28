@@ -1,0 +1,28 @@
+<footer class="site-footer mt-auto">
+  <div class="container">
+    <div class="row align-items-center py-4">
+      <div class="col-md-4">
+        <span class="footer-brand"><i class="bi bi-layers-half"></i> Portfolio<span class="brand-accent">AI</span></span>
+        <p class="footer-tagline mt-1">Portfolio professionale potenziato dall'intelligenza artificiale.</p>
+      </div>
+      <div class="col-md-4 text-center">
+        <div class="footer-links">
+          <a href="/gallery">Gallery</a>
+          <% if (user) { %>
+          <a href="/portfolio/upload">Carica Opera</a>
+          <a href="/profile/<%= user.username %>">Profilo</a>
+          <% } else { %>
+          <a href="/login">Login</a>
+          <a href="/register">Registrati</a>
+          <% } %>
+        </div>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <p class="footer-credit mb-0">
+          <i class="bi bi-cpu me-1"></i>AI-powered &bull; Built with Node.js &amp; EJS
+        </p>
+        <p class="footer-year text-muted small mb-0">© <%= new Date().getFullYear() %> PortfolioAI</p>
+      </div>
+    </div>
+  </div>
+</footer>

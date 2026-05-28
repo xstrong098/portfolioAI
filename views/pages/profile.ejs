@@ -1,0 +1,74 @@
+<%- include('../partials/layout', { body: `
+<main class="profile-page">
+  <!-- intestazione del profilo con avatar, nome e info utente -->
+  <div class="profile-hero">
+    <div class="container">
+      <div class="profile-hero-inner">
+        <div class="profile-avatar-xl">${(profileUser.full_name || profileUser.username)[0].toUpperCase()}</div>
+        <div class="profile-info">
+          <h1 class="profile-name">${profileUser.full_name || profileUser.username}</h1>
+          <p class="profile-handle text-muted">@${profileUser.username}</p>
+          ${profileUser.bio ? `<p class="profile-bio">${profileUser.bio}</p>` : ''}
+          <div class="profile-meta mt-2">
+            <span class="profile-meta-item"><i class="bi bi-images me-1"></i>${works.length} opere</span>
+            <span class="profile-meta-item"><i class="bi bi-calendar3 me-1"></i>Dal ${new Date(profileUser.created_at).toLocaleDateString('it-IT', {month:'long', year:'numeric'})}</span>
+            ${profileUser.role === 'admin' ? '<span class="badge bg-warning text-dark"><i class="bi bi-shield-fill me-1"></i>Admin</span>' : ''}
+          </div>
+        </div>
+        ${user && user.id === profileUser.id ? `
+        <div class="ms-auto">
+          <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+            <i class="bi bi-pencil me-1"></i>Modifica profilo
+          </button>
+        </div>
+        ` : ''}
+      </div>
+    </div>
+  </div>
+
+  <!-- griglia con tutte le opere dell'utente -->
+  <div class="container py-5">
+    ${works.length === 0 ? `
+    <div class="text-center py-5">
+      <i class="bi bi-images display-1 opacity-25"></i>
+      <p class="mt-3 text-muted">Nessuna opera ancora.</p>
+      ${user && user.id === profileUser.id ? '<a href="/portfolio/upload" class="btn btn-accent mt-2"><i class="bi bi-plus-circle me-1"></i>Carica la prima opera</a>' : ''}
+    </div>
+    ` : `
+    <div class="works-masonry">
+      ${works.map(work => `
+      <div class="work-card">
+        <a href="/portfolio/${work.id}" class="work-card-link">
+          <div class="work-img-wrap">
+            <img src="${work.image_path}" alt="${work.title}" class="work-img" loading="lazy">
+            <div class="work-overlay">
+              <div class="work-overlay-content">
+                <div class="work-stats">
+                  <span><i class="bi bi-eye"></i> ${work.views || 0}</span>
+                  <span><i class="bi bi-heart"></i> ${work.likes || 0}</span>
+                </div>
+              </div>
+            </div>
+            ${!work.is_public ? '<div class="private-badge"><i class="bi bi-lock-fill"></i></div>' : ''}
+            ${work.is_featured ? '<div class="featured-badge"><i class="bi bi-star-fill"></i></div>' : ''}
+          </div>
+          <div class="work-meta">
+            <h3 class="work-title">${work.title}</h3>
+            ${work.style_category ? `<span class="style-chip">${work.style_category}</span>` : ''}
+          </div>
+        </a>
+        ${user && user.id === profileUser.id ? `
+        <div class="work-owner-actions">
+          <a href="/portfolio/${work.id}/edit" class="btn btn-xs btn-outline-light"><i class="bi bi-pencil"></i></a>
+          <form action="/portfolio/${work.id}/delete" method="POST" class="d-inline" onsubmit="return confirm('Elimina opera?')">
+            <button class="btn btn-xs btn-outline-danger"><i class="bi bi-trash"></i></button>
+          </form>
+        </div>
+        ` : ''}
+      </div>
+      `).join('')}
+    </div>
+    `}
+  </div>
+</main>
+` }) %>

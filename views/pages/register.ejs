@@ -1,0 +1,58 @@
+<%- include('../partials/layout', { body: `
+<main class="auth-page d-flex align-items-center min-vh-100">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm-10 col-md-7 col-lg-5">
+        <div class="auth-card">
+          <div class="auth-card-header text-center">
+            <div class="auth-logo mb-3"><i class="bi bi-layers-half"></i> Portfolio<span class="brand-accent">AI</span></div>
+            <h2 class="auth-title">Crea il tuo portfolio</h2>
+            <p class="auth-subtitle text-muted">Registrazione gratuita</p>
+          </div>
+          <div class="auth-card-body">
+            <form action="/register" method="POST">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Nome completo</label>
+                <div class="input-icon-wrap">
+                  <i class="bi bi-person input-icon"></i>
+                  <input type="text" name="full_name" class="form-control form-control-dark ps-5" placeholder="Mario Rossi" required>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Username</label>
+                <div class="input-icon-wrap">
+                  <i class="bi bi-at input-icon"></i>
+                  <input type="text" name="username" class="form-control form-control-dark ps-5" placeholder="mario.rossi" pattern="[a-zA-Z0-9._-]+" required>
+                </div>
+                <small class="text-muted">Solo lettere, numeri, punti e trattini</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Email</label>
+                <div class="input-icon-wrap">
+                  <i class="bi bi-envelope input-icon"></i>
+                  <input type="email" name="email" class="form-control form-control-dark ps-5" placeholder="mario@email.com" required>
+                </div>
+              </div>
+              <div class="mb-4">
+                <label class="form-label fw-semibold">Password</label>
+                <div class="input-icon-wrap">
+                  <i class="bi bi-lock input-icon"></i>
+                  <input type="password" name="password" class="form-control form-control-dark ps-5" placeholder="Min. 8 caratteri" minlength="8" required>
+                </div>
+              </div>
+              <div class="d-grid mb-3">
+                <button type="submit" class="btn btn-accent btn-lg">
+                  <i class="bi bi-rocket me-2"></i>Crea account
+                </button>
+              </div>
+              <div class="text-center mt-3">
+                <p class="text-muted">Hai già un account? <a href="/login" class="link-accent">Accedi</a></p>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+` }) %> 

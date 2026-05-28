@@ -1,0 +1,53 @@
+<%- include('../../partials/layout', { body: `
+<main class="admin-page py-5">
+  <div class="container">
+    <div class="admin-header mb-5">
+      <span class="admin-badge"><i class="bi bi-shield-fill me-1"></i>Admin Panel</span>
+      <h1 class="admin-title mt-2">Gestione Opere</h1>
+      <div class="admin-nav mt-3 d-flex gap-2 flex-wrap">
+        <a href="/admin" class="btn btn-sm btn-outline-light">Dashboard</a>
+        <a href="/admin/users" class="btn btn-sm btn-outline-light">Utenti</a>
+        <a href="/admin/works" class="btn btn-sm btn-accent">Opere</a>
+        <a href="/admin/tags" class="btn btn-sm btn-outline-light">Tag</a>
+        <a href="/gallery" class="btn btn-sm btn-outline-secondary">← Sito</a>
+      </div>
+    </div>
+    <div class="admin-card">
+      <div class="admin-table-wrap">
+        <table class="table table-dark table-hover admin-table">
+          <thead>
+            <tr><th>Preview</th><th>Titolo</th><th>Autore</th><th>Stile</th><th>Views</th><th>Stato</th><th>Azioni</th></tr>
+          </thead>
+          <tbody>
+            ${works.map(w => `
+            <tr>
+              <td><img src="${w.image_path}" width="50" height="50" style="object-fit:cover;border-radius:6px;"></td>
+              <td><a href="/portfolio/${w.id}" class="text-light" target="_blank">${w.title}</a></td>
+              <td class="text-muted small">${w.username}</td>
+              <td><span class="style-chip">${w.style_category || '—'}</span></td>
+              <td>${w.views || 0}</td>
+              <td>
+                <span class="badge ${w.is_public ? 'bg-success' : 'bg-secondary'} me-1">${w.is_public ? 'Pubblica' : 'Privata'}</span>
+                ${w.is_featured ? '<span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i></span>' : ''}
+              </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <form action="/admin/works/${w.id}/featured" method="POST">
+                    <button class="btn btn-xs ${w.is_featured ? 'btn-warning' : 'btn-outline-warning'}" title="Toggle featured">
+                      <i class="bi bi-star-fill"></i>
+                    </button>
+                  </form>
+                  <form action="/admin/works/${w.id}/delete" method="POST" onsubmit="return confirm('Eliminare questa opera?')">
+                    <button class="btn btn-xs btn-outline-danger"><i class="bi bi-trash"></i></button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+` }) %>

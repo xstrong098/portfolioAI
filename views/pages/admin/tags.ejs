@@ -1,0 +1,61 @@
+<%- include('../../partials/layout', { body: `
+<main class="admin-page py-5">
+  <div class="container">
+    <div class="admin-header mb-5">
+      <span class="admin-badge"><i class="bi bi-shield-fill me-1"></i>Admin Panel</span>
+      <h1 class="admin-title mt-2">Gestione Tag</h1>
+      <div class="admin-nav mt-3 d-flex gap-2 flex-wrap">
+        <a href="/admin" class="btn btn-sm btn-outline-light">Dashboard</a>
+        <a href="/admin/users" class="btn btn-sm btn-outline-light">Utenti</a>
+        <a href="/admin/works" class="btn btn-sm btn-outline-light">Opere</a>
+        <a href="/admin/tags" class="btn btn-sm btn-accent">Tag</a>
+        <a href="/gallery" class="btn btn-sm btn-outline-secondary">← Sito</a>
+      </div>
+    </div>
+
+    <!-- form per creare un nuovo tag con nome e colore -->
+    <div class="admin-card mb-4">
+      <div class="admin-card-header"><h5><i class="bi bi-plus-circle me-2"></i>Nuovo Tag</h5></div>
+      <form action="/admin/tags/create" method="POST" class="p-3">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-5">
+            <label class="form-label fw-semibold">Nome tag</label>
+            <input type="text" name="name" class="form-control form-control-dark" placeholder="es. Motion Graphics" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Colore</label>
+            <input type="color" name="color" class="form-control form-control-color w-100" value="#6c757d">
+          </div>
+          <div class="col-md-4">
+            <button type="submit" class="btn btn-accent w-100"><i class="bi bi-plus me-1"></i>Crea tag</button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- lista di tutti i tag esistenti con il numero di utilizzi -->
+    <div class="admin-card">
+      <div class="admin-table-wrap">
+        <table class="table table-dark table-hover admin-table">
+          <thead><tr><th>Colore</th><th>Nome</th><th>Slug</th><th>Utilizzi</th><th>Azioni</th></tr></thead>
+          <tbody>
+            ${tags.map(t => `
+            <tr>
+              <td><div style="width:24px;height:24px;background:${t.color};border-radius:50%;"></div></td>
+              <td><strong>${t.name}</strong></td>
+              <td class="text-muted small">${t.slug}</td>
+              <td><span class="badge bg-secondary">${t.usage_count}</span></td>
+              <td>
+                <form action="/admin/tags/${t.id}/delete" method="POST" onsubmit="return confirm('Eliminare il tag ${t.name}?')">
+                  <button class="btn btn-xs btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+            </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+` }) %>

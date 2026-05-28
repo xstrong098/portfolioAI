@@ -1,0 +1,65 @@
+<%- include('../partials/layout', { body: `
+<main class="upload-page py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="page-header mb-5">
+          <a href="/portfolio/${work.id}" class="btn btn-sm btn-outline-light mb-3"><i class="bi bi-arrow-left me-1"></i>Torna all'opera</a>
+          <h1 class="page-title"><i class="bi bi-pencil-square me-2"></i>Modifica opera</h1>
+        </div>
+        <div class="mb-4">
+          <img src="${work.image_path}" alt="${work.title}" class="img-fluid rounded-3" style="max-height:300px;object-fit:cover;width:100%">
+        </div>
+        <form action="/portfolio/${work.id}/edit" method="POST" class="upload-form">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Titolo <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control form-control-dark" value="${work.title}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Descrizione</label>
+            <textarea name="description" class="form-control form-control-dark" rows="3">${work.description || ''}</textarea>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Stile</label>
+              <select name="style_category" class="form-select form-control-dark">
+                <option value="">Seleziona...</option>
+                ${['Minimalist','Brutalist','Art Deco','Swiss Style','Maximalist','Editorial','Retro','Organic','Futuristic','Hand-drawn'].map(s => `<option ${work.style_category === s ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Strumenti</label>
+              <input type="text" name="tools_used" class="form-control form-control-dark" value="${work.tools_used || ''}">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold"><i class="bi bi-tags me-1"></i>Tag</label>
+            <div class="tags-selector">
+              ${allTags.map(tag => `
+              <label class="tag-checkbox-label">
+                <input type="checkbox" name="tags" value="${tag.id}" class="d-none tag-checkbox" ${selectedTags.includes(tag.id) ? 'checked' : ''}>
+                <span class="tag-checkbox-display ${selectedTags.includes(tag.id) ? 'selected' : ''}" style="--tag-col:${tag.color}">${tag.name}</span>
+              </label>
+              `).join('')}
+            </div>
+          </div>
+          <div class="mb-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="is_public" id="isPublic" ${work.is_public ? 'checked' : ''}>
+              <label class="form-check-label" for="isPublic"><i class="bi bi-globe me-1"></i>Pubblica nella gallery</label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-accent btn-lg w-100"><i class="bi bi-check2-circle me-2"></i>Salva modifiche</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+document.querySelectorAll('.tag-checkbox').forEach(cb => {
+  cb.addEventListener('change', function() {
+    this.parentElement.querySelector('.tag-checkbox-display').classList.toggle('selected', this.checked);
+  });
+});
+</script>
+` }) %>

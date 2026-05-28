@@ -1,0 +1,180 @@
+<%- include('../partials/layout', { body: `
+<main class="upload-page py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+
+        <div class="page-header mb-5">
+          <h1 class="page-title"><i class="bi bi-cloud-upload me-2"></i>Carica un'opera</h1>
+          <p class="page-subtitle">Condividi il tuo lavoro grafico e lascia che l'AI lo analizzi per te</p>
+        </div>
+
+        <form action="/portfolio/upload" method="POST" enctype="multipart/form-data" class="upload-form" id="uploadForm">
+
+          <!-- area dove si trascina o seleziona l'immagine da caricare -->
+          <div class="upload-dropzone mb-4" id="dropzone">
+            <input type="file" name="image" id="imageInput" accept="image/*" required class="dropzone-input">
+            <div class="dropzone-content" id="dropzoneContent">
+              <i class="bi bi-image-alt display-3 text-muted"></i>
+              <p class="mt-3 mb-1 fw-semibold">Trascina qui la tua immagine</p>
+              <p class="text-muted small">o clicca per selezionare — JPG, PNG, WebP, SVG (max 10MB)</p>
+            </div>
+            <img id="imagePreview" class="image-preview d-none" alt="Preview">
+          </div>
+
+          <!-- campo titolo dell'opera -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Titolo dell'opera <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control form-control-dark" placeholder="es. Identità visiva per startup tech" required>
+          </div>
+
+          <!-- campo descrizione con il bottone per generarla automaticamente con l'ai -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Descrizione</label>
+            <textarea name="description" class="form-control form-control-dark" rows="3" placeholder="Descrivi il progetto, il cliente, il brief..."></textarea>
+            <button type="button" class="btn btn-sm btn-ai mt-2" id="genDescBtn" disabled>
+              <i class="bi bi-stars me-1"></i>Genera con AI
+            </button>
+          </div>
+
+          <!-- stile grafico dell'opera e strumenti usati per crearla -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Stile / Categoria</label>
+              <select name="style_category" class="form-select form-control-dark">
+                <option value="">Seleziona uno stile...</option>
+                <option>Minimalist</option>
+                <option>Brutalist</option>
+                <option>Art Deco</option>
+                <option>Swiss Style</option>
+                <option>Maximalist</option>
+                <option>Editorial</option>
+                <option>Retro</option>
+                <option>Organic</option>
+                <option>Futuristic</option>
+                <option>Hand-drawn</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Strumenti usati</label>
+              <input type="text" name="tools_used" class="form-control form-control-dark" placeholder="es. Illustrator, Figma, Photoshop">
+            </div>
+          </div>
+
+          <!-- selezione multipla dei tag per categorizzare l'opera -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold"><i class="bi bi-tags me-1"></i>Tag</label>
+            <div class="tags-selector">
+              ${tags.map(tag => `
+              <label class="tag-checkbox-label">
+                <input type="checkbox" name="tags" value="${tag.id}" class="d-none tag-checkbox">
+                <span class="tag-checkbox-display" style="--tag-col:${tag.color}">${tag.name}</span>
+              </label>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- toggle per scegliere se rendere l'opera pubblica o tenerla privata -->
+          <div class="mb-4">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="is_public" id="isPublic" checked>
+              <label class="form-check-label" for="isPublic">
+                <i class="bi bi-globe me-1"></i> Pubblica nella gallery
+              </label>
+            </div>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-accent btn-lg" id="submitBtn">
+              <i class="bi bi-cloud-upload me-2"></i>Carica Opera
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const dropzone = document.getElementById('dropzone');
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+const dropzoneContent = document.getElementById('dropzoneContent');
+const genDescBtn = document.getElementById('genDescBtn');
+
+// apro il selettore file quando clicco sulla dropzone
+dropzone.addEventListener('click', (e) => {
+  if (!e.target.classList.contains('image-preview')) imageInput.click();
+});
+
+// gestisco il drag and drop dei file sulla dropzone
+dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) showPreview(file);
+});
+
+imageInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) showPreview(e.target.files[0]);
+});
+
+function showPreview(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    imagePreview.src = e.target.result;
+    imagePreview.classList.remove('d-none');
+    dropzoneContent.classList.add('d-none');
+    genDescBtn.disabled = false;
+    dropzone.classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+  // assegno il file droppato al campo input in modo che venga inviato col form
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  imageInput.files = dt.files;
+}
+
+// gestisco la selezione visiva dei tag con le checkbox nascoste
+document.querySelectorAll('.tag-checkbox').forEach(cb => {
+  cb.addEventListener('change', function() {
+    this.parentElement.querySelector('.tag-checkbox-display').classList.toggle('selected', this.checked);
+  });
+});
+
+// chiamo l'api per generare una descrizione con l'ai partendo dal titolo e dai metadati
+genDescBtn.addEventListener('click', async () => {
+  const title = document.querySelector('[name="title"]').value;
+  const style = document.querySelector('[name="style_category"]').value;
+  const tools = document.querySelector('[name="tools_used"]').value;
+  const selectedTags = [...document.querySelectorAll('.tag-checkbox:checked')].map(c => c.parentElement.textContent.trim()).join(', ');
+  
+  genDescBtn.disabled = true;
+  genDescBtn.innerHTML = '<i class="bi bi-stars me-1"></i>Generando...';
+  
+  try {
+    const res = await fetch('/api/generate-description', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, style_category: style, tools_used: tools, tags: selectedTags })
+    });
+    const data = await res.json();
+    if (data.description) {
+      document.querySelector('[name="description"]').value = data.description;
+    }
+  } catch(e) {}
+  
+  genDescBtn.disabled = false;
+  genDescBtn.innerHTML = '<i class="bi bi-stars me-1"></i>Genera con AI';
+});
+
+// mostro uno spinner sul bottone mentre il form viene inviato
+document.getElementById('uploadForm').addEventListener('submit', () => {
+  document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Caricamento...';
+  document.getElementById('submitBtn').disabled = true;
+});
+</script>
+` }) %>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= work.title %> — PortfolioAI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="/css/main.css" rel="stylesheet">
+</head>
+<body>
+
+<%- include('../partials/navbar') %>
+
+<div class="flash-container">
+  <% if (success && success.length > 0) { %>
+    <% success.forEach(function(msg) { %>
+      <div class="alert alert-success alert-dismissible fade show flash-alert" role="alert">
+        <i class="bi bi-check-circle me-2"></i><%= msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <% }) %>
+  <% } %>
+  <% if (error && error.length > 0) { %>
+    <% error.forEach(function(msg) { %>
+      <div class="alert alert-danger alert-dismissible fade show flash-alert" role="alert">
+        <i class="bi bi-exclamation-circle me-2"></i><%= msg %>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    <% }) %>
+  <% } %>
+</div>
+
+<main class="work-detail-page">
+  <div class="container py-5">
+    <div class="row g-5">
+
+      <!-- colonna sinistra con l'immagine principale e i commenti -->
+      <div class="col-lg-7">
+        <div class="work-image-container" id="imageContainer">
+          <img src="<%= work.image_path %>" alt="<%= work.title %>" class="img-fluid work-full-img">
+          <% if (palette && palette.length > 0) { %>
+          <div class="color-palette-bar mt-3">
+            <p class="palette-label"><i class="bi bi-palette me-1"></i>Palette estratta dall'AI</p>
+            <div class="palette-swatches">
+              <% palette.forEach(function(color) { %>
+                <div class="palette-swatch" style="background:<%= color %>" title="<%= color %>" data-color="<%= color %>">
+                  <span class="swatch-tooltip"><%= color %></span>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- sezione commenti degli utenti -->
+        <div class="comments-section mt-5" id="comments">
+          <h3 class="section-title"><i class="bi bi-chat-square-text me-2"></i>Commenti (<%= comments.length %>)</h3>
+          <% if (user) { %>
+          <form action="/portfolio/<%= work.id %>/comment" method="POST" class="comment-form mb-4">
+            <div class="input-group">
+              <textarea name="content" class="form-control comment-input" rows="2" placeholder="Lascia un commento professionale..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-accent mt-2 w-100"><i class="bi bi-send me-1"></i>Pubblica commento</button>
+          </form>
+          <% } else { %>
+          <a href="/login" class="btn btn-outline-light mb-4">Accedi per commentare</a>
+          <% } %>
+          <div class="comments-list">
+            <% if (comments.length === 0) { %>
+              <p class="text-muted">Nessun commento ancora. Sii il primo!</p>
+            <% } else { %>
+              <% comments.forEach(function(c) { %>
+              <div class="comment-card">
+                <div class="comment-header">
+                  <div class="author-avatar-sm"><%= (c.full_name || c.username)[0].toUpperCase() %></div>
+                  <div>
+                    <strong><%= c.full_name || c.username %></strong>
+                    <span class="comment-date text-muted small ms-2"><%= new Date(c.created_at).toLocaleDateString('it-IT') %></span>
+                  </div>
+                </div>
+                <p class="comment-body"><%= c.content %></p>
+              </div>
+              <% }) %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- colonna destra con le info dell'opera e l'analisi ai -->
+      <div class="col-lg-5">
+        <div class="work-info-sticky">
+
+          <div class="work-header mb-4">
+            <div class="d-flex align-items-start justify-content-between">
+              <div>
+                <% if (work.style_category) { %>
+                  <span class="style-chip-lg mb-2 d-inline-block"><%= work.style_category %></span>
+                <% } %>
+                <h1 class="work-detail-title"><%= work.title %></h1>
+              </div>
+              <div class="work-actions-top">
+                <% if (user && user.id === work.user_id) { %>
+                  <a href="/portfolio/<%= work.id %>/edit" class="btn btn-sm btn-outline-light me-1"><i class="bi bi-pencil"></i></a>
+                  <form action="/portfolio/<%= work.id %>/delete" method="POST" class="d-inline" onsubmit="return confirm('Eliminare questa opera?')">
+                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                  </form>
+                <% } %>
+              </div>
+            </div>
+            <div class="work-author-row mt-3">
+              <a href="/profile/<%= work.username %>" class="author-link">
+                <div class="author-avatar"><%= (work.full_name || work.username)[0].toUpperCase() %></div>
+                <div>
+                  <div class="author-name"><%= work.full_name || work.username %></div>
+                  <div class="author-handle text-muted small">@<%= work.username %></div>
+                </div>
+              </a>
+            </div>
+          </div>
+
+          <div class="work-stats-bar mb-4">
+            <div class="stat-item"><i class="bi bi-eye"></i><span><%= work.views || 0 %> visualizzazioni</span></div>
+            <div class="stat-item"><i class="bi bi-heart"></i><span id="likeCount"><%= work.likes || 0 %> like</span></div>
+            <div class="stat-item"><i class="bi bi-calendar3"></i><span><%= new Date(work.created_at).toLocaleDateString('it-IT') %></span></div>
+          </div>
+
+          <% if (user) { %>
+          <button class="btn btn-like w-100 mb-4" id="likeBtn">
+            <i class="bi bi-heart me-2"></i>Mi piace
+          </button>
+          <% } %>
+
+          <% if (work.description) { %>
+          <div class="info-card mb-3">
+            <h5 class="info-card-title"><i class="bi bi-text-paragraph me-2"></i>Descrizione</h5>
+            <p class="info-card-body"><%= work.description %></p>
+          </div>
+          <% } %>
+
+          <div class="ai-card mb-3">
+            <div class="ai-card-header">
+              <span><i class="bi bi-stars me-2"></i>Analisi AI</span>
+              <% if (user && user.id === work.user_id) { %>
+              <button class="btn btn-sm btn-ai" id="analyzeBtn" onclick="analyzeWork(<%= work.id %>)">
+                <% if (work.ai_description) { %>
+                  <i class="bi bi-arrow-clockwise me-1"></i>Rianalizza
+                <% } else { %>
+                  <i class="bi bi-cpu me-1"></i>Analizza ora
+                <% } %>
+              </button>
+              <% } %>
+            </div>
+            <div id="aiContent">
+              <% if (work.ai_description) { %>
+                <p class="ai-description"><%= work.ai_description %></p>
+                <% if (work.ai_tags) { %>
+                <div class="ai-tags mt-2">
+                  <% work.ai_tags.split(',').forEach(function(t) { %>
+                    <span class="ai-tag"><%= t.trim() %></span>
+                  <% }) %>
+                </div>
+                <% } %>
+              <% } else { %>
+                <p class="text-muted ai-placeholder">
+                  <i class="bi bi-cpu me-1"></i>
+                  <% if (user && user.id === work.user_id) { %>
+                    Clicca "Analizza ora" per ottenere descrizione e tag dall'AI.
+                  <% } else { %>
+                    Analisi AI non ancora disponibile.
+                  <% } %>
+                </p>
+              <% } %>
+            </div>
+            <div id="aiLoading" class="ai-loading d-none">
+              <div class="ai-spinner"><i class="bi bi-stars"></i></div>
+              <p>L'AI sta analizzando l'opera...</p>
+            </div>
+          </div>
+
+          <% if (tags && tags.length > 0) { %>
+          <div class="info-card mb-3">
+            <h5 class="info-card-title"><i class="bi bi-tags me-2"></i>Tag</h5>
+            <div class="tags-list">
+              <% tags.forEach(function(t) { %>
+                <span class="tag-chip-md" style="background:<%= t.color %>22;color:<%= t.color %>;border-color:<%= t.color %>44"><%= t.name %></span>
+              <% }) %>
+            </div>
+          </div>
+          <% } %>
+
+          <% if (work.tools_used) { %>
+          <div class="info-card mb-3">
+            <h5 class="info-card-title"><i class="bi bi-tools me-2"></i>Strumenti</h5>
+            <p class="info-card-body"><%= work.tools_used %></p>
+          </div>
+          <% } %>
+
+          <div class="info-card">
+            <h5 class="info-card-title"><i class="bi bi-share me-2"></i>Condividi</h5>
+            <button class="btn btn-sm btn-outline-light" onclick="copyLink()"><i class="bi bi-link-45deg me-1"></i>Copia link</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <% if (related && related.length > 0) { %>
+    <hr class="section-divider my-5">
+    <h3 class="section-title mb-4"><i class="bi bi-grid me-2"></i>Opere correlate</h3>
+    <div class="row g-3">
+      <% related.forEach(function(r) { %>
+      <div class="col-6 col-md-3">
+        <a href="/portfolio/<%= r.id %>" class="related-card">
+          <img src="<%= r.image_path %>" alt="<%= r.title %>" class="related-img">
+          <div class="related-meta"><span><%= r.title %></span></div>
+        </a>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/main.js"></script>
+<script>
+var WORK_ID = <%= work.id %>;
+
+async function analyzeWork(workId) {
+  document.getElementById('aiContent').classList.add('d-none');
+  document.getElementById('aiLoading').classList.remove('d-none');
+  document.getElementById('analyzeBtn').disabled = true;
+
+  try {
+    var res = await fetch('/api/analyze/' + workId, { method: 'POST' });
+    var data = await res.json();
+
+    if (data.success) {
+      var html = '<p class="ai-description">' + data.description + '</p>';
+      if (data.tags) {
+        html += '<div class="ai-tags mt-2">';
+        data.tags.split(',').forEach(function(t) {
+          html += '<span class="ai-tag">' + t.trim() + '</span>';
+        });
+        html += '</div>';
+      }
+      document.getElementById('aiContent').innerHTML = html;
+
+      if (data.palette && data.palette.length) {
+        var existing = document.querySelector('.color-palette-bar');
+        if (existing) existing.remove();
+        var palHtml = '<div class="color-palette-bar mt-3"><p class="palette-label"><i class="bi bi-palette me-1"></i>Palette estratta dall\'AI</p><div class="palette-swatches">';
+        data.palette.forEach(function(c) {
+          palHtml += '<div class="palette-swatch" style="background:' + c + '" data-color="' + c + '" title="' + c + '"><span class="swatch-tooltip">' + c + '</span></div>';
+        });
+        palHtml += '</div></div>';
+        document.getElementById('imageContainer').insertAdjacentHTML('beforeend', palHtml);
+      }
+    } else {
+      document.getElementById('aiContent').innerHTML = '<p class="text-danger">Errore durante l\'analisi. Riprova.</p>';
+    }
+  } catch(e) {
+    document.getElementById('aiContent').innerHTML = '<p class="text-danger">Errore di connessione.</p>';
+  }
+
+  document.getElementById('aiContent').classList.remove('d-none');
+  document.getElementById('aiLoading').classList.add('d-none');
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+var likeBtn = document.getElementById('likeBtn');
+if (likeBtn) {
+  likeBtn.addEventListener('click', async function() {
+    likeBtn.disabled = true;
+    var res = await fetch('/portfolio/' + WORK_ID + '/like', { method: 'POST' });
+    if (res.ok) {
+      var count = document.getElementById('likeCount');
+      var n = parseInt(count.textContent) + 1;
+      count.textContent = n + ' like';
+      likeBtn.classList.add('liked');
+      likeBtn.innerHTML = '<i class="bi bi-heart-fill me-2"></i>Ti piace!';
+    }
+  });
+}
+
+function copyLink() {
+  navigator.clipboard.writeText(window.location.href);
+  alert('Link copiato!');
+}
+</script>
+</body>
+</html>

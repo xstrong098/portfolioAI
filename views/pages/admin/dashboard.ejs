@@ -1,0 +1,97 @@
+<%- include('../../partials/layout', { body: `
+<main class="admin-page py-5">
+  <div class="container">
+    <div class="admin-header mb-5">
+      <span class="admin-badge"><i class="bi bi-shield-fill me-1"></i>Admin Panel</span>
+      <h1 class="admin-title mt-2">Dashboard</h1>
+      <div class="admin-nav mt-3 d-flex gap-2 flex-wrap">
+        <a href="/admin" class="btn btn-sm btn-accent">Dashboard</a>
+        <a href="/admin/users" class="btn btn-sm btn-outline-light">Utenti</a>
+        <a href="/admin/works" class="btn btn-sm btn-outline-light">Opere</a>
+        <a href="/admin/tags" class="btn btn-sm btn-outline-light">Tag</a>
+        <a href="/gallery" class="btn btn-sm btn-outline-secondary">← Sito</a>
+      </div>
+    </div>
+
+    <!-- card con le statistiche principali: utenti, opere e visualizzazioni -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+          <div class="stat-number">${stats.totalUsers}</div>
+          <div class="stat-label">Utenti registrati</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-icon accent-2"><i class="bi bi-images"></i></div>
+          <div class="stat-number">${stats.totalWorks}</div>
+          <div class="stat-label">Opere caricate</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <div class="stat-icon accent-3"><i class="bi bi-eye-fill"></i></div>
+          <div class="stat-number">${stats.totalViews}</div>
+          <div class="stat-label">Visualizzazioni totali</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- tabella degli ultimi utenti che si sono registrati -->
+      <div class="col-lg-6">
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h5><i class="bi bi-person-plus me-2"></i>Ultimi utenti</h5>
+            <a href="/admin/users" class="btn btn-xs btn-outline-light">Vedi tutti</a>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="table table-dark table-hover admin-table">
+              <thead><tr><th>Username</th><th>Email</th><th>Ruolo</th><th>Data</th></tr></thead>
+              <tbody>
+                ${recentUsers.map(u => `
+                <tr>
+                  <td><strong>${u.username}</strong></td>
+                  <td class="text-muted small">${u.email}</td>
+                  <td><span class="badge ${u.role === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}">${u.role}</span></td>
+                  <td class="text-muted small">${new Date(u.created_at).toLocaleDateString('it-IT')}</td>
+                </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- tabella delle ultime opere caricate sul sito -->
+      <div class="col-lg-6">
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h5><i class="bi bi-cloud-upload me-2"></i>Ultime opere</h5>
+            <a href="/admin/works" class="btn btn-xs btn-outline-light">Vedi tutte</a>
+          </div>
+          <div class="admin-table-wrap">
+            <table class="table table-dark table-hover admin-table">
+              <thead><tr><th>Immagine</th><th>Titolo</th><th>Utente</th><th>Azioni</th></tr></thead>
+              <tbody>
+                ${recentWorks.map(w => `
+                <tr>
+                  <td><img src="${w.image_path}" width="40" height="40" style="object-fit:cover;border-radius:4px"></td>
+                  <td><a href="/portfolio/${w.id}" class="text-light" target="_blank">${w.title}</a></td>
+                  <td class="text-muted small">${w.username}</td>
+                  <td>
+                    <form action="/admin/works/${w.id}/featured" method="POST" class="d-inline">
+                      <button class="btn btn-xs ${w.is_featured ? 'btn-warning' : 'btn-outline-warning'}"><i class="bi bi-star-fill"></i></button>
+                    </form>
+                  </td>
+                </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+` }) %>

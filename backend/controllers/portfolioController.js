@@ -100,7 +100,7 @@ const portfolioController = {
   async postDelete(req, res) {
     const work = await Work.findOwned(req.params.id, req.session.user.id);
     if (work) {
-      const imgPath = path.join(__dirname, '../public', work.image_path);
+      const imgPath = path.join(__dirname, '../../frontend/public', work.image_path);
       if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
       await Work.delete(work.id);
       req.flash('success', 'Opera eliminata.');

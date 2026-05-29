@@ -106,7 +106,7 @@ const apiController = {
       if (!work) return res.status(404).json({ error: 'Opera non trovata' });
 
       /* verifico che il file immagine esista fisicamente sul disco */
-      const imgPath = path.join(__dirname, '../public', work.image_path);
+      const imgPath = path.join(__dirname, '../../frontend/public', work.image_path);
       if (!fs.existsSync(imgPath)) return res.status(404).json({ error: 'File immagine non trovato' });
 
       let aiDescription = '';

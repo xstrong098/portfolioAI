@@ -8,11 +8,11 @@ const app = express();
 
 /* motore di template, uso ejs perché mi sembra più semplice degli altri */
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, '../frontend/views'));
 
 /* cartella pubblica per css, js e immagini caricate */
-app.use(express.static(path.join(__dirname, 'public')));
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+app.use(express.static(path.join(__dirname, '../frontend/public')));
+app.use('/uploads', express.static(path.join(__dirname, '../frontend/public/uploads')));
 
 /* serve per leggere i dati che arrivano dai form */
 app.use(express.urlencoded({ extended: true }));

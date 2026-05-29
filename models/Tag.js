@@ -1,6 +1,6 @@
 const db = require('../config/db');
 
-/* modello tag - gestisce le query sui tag e sulle associazioni con le opere */
+/* modello tag gestisce le query sui tag e sulle associazioni con le opere */
 class Tag {
   static async getAll() {
     const [rows] = await db.query('SELECT * FROM tags ORDER BY name');

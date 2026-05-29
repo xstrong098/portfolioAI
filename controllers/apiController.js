@@ -7,22 +7,23 @@ const Work = require('../models/Work');
 /* estrae la palette colori dall'immagine usando sharp */
 async function extractColorPalette(imgPath) {
   try {
-    /* rimpicciolisco a 100x100 così non processo milioni di pixel */
+    /* rimpicciolisco a 100x100 così non processo milioni di pixel, altrimenti è lentissimo */
     const { data } = await sharp(imgPath)
       .resize(100, 100, { fit: 'inside' })
-      .removeAlpha()
+      .removeAlpha() /* rimuovo il canale alpha perché lavoro solo con rgb */
       .raw()
       .toBuffer({ resolveWithObject: true });
 
+    /* converto il buffer in un array di pixel [r, g, b] */
     const pixels = [];
     for (let i = 0; i < data.length; i += 3) {
       pixels.push([data[i], data[i + 1], data[i + 2]]);
     }
 
-    /* campiono un pixel ogni 20 per velocizzare */
+    /* campiono un pixel ogni 20 per velocizzare, non mi servono tutti */
     const sampled = pixels.filter((_, i) => i % 20 === 0);
 
-    /* raggruppo colori simili arrotondando a multipli di 32 */
+    /* raggruppo colori simili arrotondando a multipli di 32, così evito di avere mille sfumature diverse */
     const buckets = {};
     sampled.forEach(([r, g, b]) => {
       const rk = Math.round(r / 32) * 32;
@@ -36,8 +37,10 @@ async function extractColorPalette(imgPath) {
       buckets[key].b += b;
     });
 
-    /* prendo i 5 colori più frequenti */
+    /* ordino per frequenza e prendo i 5 colori più presenti nell'immagine */
     const sorted = Object.values(buckets).sort((a, b) => b.count - a.count).slice(0, 5);
+
+    /* calcolo la media dei valori rgb dentro ogni bucket e converto in hex */
     return sorted.map(({ count, r, g, b }) => {
       const avg_r = Math.round(r / count);
       const avg_g = Math.round(g / count);
@@ -46,12 +49,12 @@ async function extractColorPalette(imgPath) {
     });
   } catch (e) {
     console.error('Palette extraction error:', e.message);
-    /* palette di fallback se qualcosa va storto */
+    /* palette di fallback se qualcosa va storto, meglio avere qualcosa che niente */
     return ['#1A1A2E', '#16213E', '#0F3460', '#E94560', '#F5F5F5'];
   }
 }
 
-/* genera la descrizione testuale con claude */
+/* chiama claude solo con testo, senza immagine - serve per generare descrizioni */
 async function callClaudeText(prompt) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -66,12 +69,12 @@ async function callClaudeText(prompt) {
       messages: [{ role: 'user', content: prompt }]
     })
   });
-  if (!response.ok) return null;
+  if (!response.ok) return null; /* se la risposta non è ok ritorno null invece di crashare */
   const data = await response.json();
   return data.content?.[0]?.text || null;
 }
 
-/* genera la descrizione di fallback senza chiamare l'ai */
+/* genera la descrizione di fallback senza chiamare l'ai, per quando l'api non risponde */
 function generateFallbackDescription(work) {
   const styles = {
     'Minimalist': 'caratterizzata da linee pulite ed essenzialità compositiva',
@@ -84,6 +87,7 @@ function generateFallbackDescription(work) {
   return `Opera di design grafico ${styleDesc}. Realizzata con ${work.tools_used || 'strumenti professionali'}, questa composizione esprime la visione creativa del designer attraverso scelte formali precise e intenzionali.`;
 }
 
+/* genera tag di fallback basandosi sullo stile e gli strumenti dell'opera */
 function generateFallbackTags(work) {
   const base = ['graphic design', 'digital art', 'creative work'];
   if (work.style_category) base.unshift(work.style_category.toLowerCase());
@@ -91,26 +95,32 @@ function generateFallbackTags(work) {
   return base.slice(0, 5).join(', ');
 }
 
-/* controller per le api */
+/* controller per le api - gestisce analisi ai, generazione descrizioni e ricerca */
 const apiController = {
 
+  /* analizza un'opera con claude - estrae palette colori e genera descrizione + tag */
   async analyzeWork(req, res) {
     try {
+      /* verifico che l'opera esista e appartenga all'utente loggato */
       const work = await Work.findOwned(req.params.workId, req.session.user.id);
       if (!work) return res.status(404).json({ error: 'Opera non trovata' });
 
+      /* verifico che il file immagine esista fisicamente sul disco */
       const imgPath = path.join(__dirname, '../public', work.image_path);
       if (!fs.existsSync(imgPath)) return res.status(404).json({ error: 'File immagine non trovato' });
 
       let aiDescription = '';
       let aiTags = '';
 
+      /* estraggo prima la palette colori, non dipende da claude quindi la faccio subito */
       const colorPalette = await extractColorPalette(imgPath);
 
-      /* mando l'immagine a claude per la descrizione */
+      /* mando l'immagine a claude in base64 per ottenere descrizione e tag */
       try {
         const imageData = fs.readFileSync(imgPath);
         const base64Image = imageData.toString('base64');
+
+        /* determino il mime type dall'estensione del file */
         const ext = path.extname(work.image_path).toLowerCase();
         let mimeType = 'image/jpeg';
         if (ext === '.png') mimeType = 'image/png';
@@ -130,6 +140,7 @@ const apiController = {
             messages: [{
               role: 'user',
               content: [
+                /* mando prima l'immagine poi il testo con le istruzioni */
                 { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64Image } },
                 {
                   type: 'text',
@@ -146,10 +157,12 @@ La descrizione deve essere professionale. I tag devono descrivere stile, colori,
           const data = await response.json();
           const text = data.content?.[0]?.text || '';
           try {
+            /* provo a fare il parse del json - claude a volte aggiunge ```json quindi lo pulisco */
             const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
             if (parsed.description) aiDescription = parsed.description;
             if (parsed.tags) aiTags = parsed.tags;
           } catch (e) {
+            /* se non riesco a parsare il json uso il testo così com'è */
             if (text) aiDescription = text.substring(0, 300);
           }
         }
@@ -157,11 +170,13 @@ La descrizione deve essere professionale. I tag devono descrivere stile, colori,
         console.error('Claude API error:', apiErr.message);
       }
 
+      /* se claude non ha risposto uso il fallback generato localmente */
       if (!aiDescription) {
         aiDescription = generateFallbackDescription(work);
         aiTags = generateFallbackTags(work);
       }
 
+      /* salvo tutto nel db e rispondo con i dati generati */
       await Work.updateAiData(work.id, { aiDescription, aiTags, colorPalette });
       res.json({ success: true, description: aiDescription, tags: aiTags, palette: colorPalette });
 
@@ -171,6 +186,7 @@ La descrizione deve essere professionale. I tag devono descrivere stile, colori,
     }
   },
 
+  /* genera una descrizione testuale per un'opera ancora prima di caricarla */
   async generateDescription(req, res) {
     const { title, style_category, tools_used, tags } = req.body;
     try {
@@ -193,6 +209,7 @@ Rispondi solo con la descrizione in italiano, nessun altro testo.`);
     });
   },
 
+  /* cerca opere pubbliche in base a query, tag e stile */
   async searchWorks(req, res) {
     try {
       const works = await Work.search(req.query);

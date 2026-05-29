@@ -1,6 +1,3 @@
--- schema del database, importarlo in phpmyadmin prima di avviare l'app
--- ============================================================
-
 CREATE DATABASE IF NOT EXISTS portfolio_ai CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE portfolio_ai;
 
@@ -61,7 +58,7 @@ CREATE TABLE IF NOT EXISTS work_tags (
   FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
 );
 
--- tabella delle raccolte (non ancora usata nel frontend, la aggiungo dopo forse)
+-- tabella delle raccolte 
 CREATE TABLE IF NOT EXISTS collections (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
